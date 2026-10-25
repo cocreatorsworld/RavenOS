@@ -34,7 +34,7 @@ RUN apt-get update \
 WORKDIR /build
 
 COPY ui-web/package.json ui-web/package-lock.json ./ui-web/
-RUN --mount=type=cache,target=/root/.npm npm ci --prefix ui-web
+RUN --mount=type=cache,id=s/d3dcc0aa-b425-42e9-87cb-c303bf086764-/root/.npm,target=/root/.npm npm ci --prefix ui-web
 
 # i18n/messages.json is the catalogue build.py inlines; it is shared with the
 # TUI and lives at the repo root, not under ui-web.
@@ -73,7 +73,7 @@ COPY pyproject.toml uv.lock README.md hatch_build.py ./
 COPY plugins-dist/everos-memory/pyproject.toml ./plugins-dist/everos-memory/
 COPY plugins-dist/ppt-engine/pyproject.toml ./plugins-dist/ppt-engine/
 COPY plugins-dist/design-engine/pyproject.toml ./plugins-dist/design-engine/
-RUN --mount=type=cache,target=/root/.cache/uv \
+RUN --mount=type=cache,id=s/d3dcc0aa-b425-42e9-87cb-c303bf086764-/root/.cache/uv,target=/root/.cache/uv \
     set -eu; \
     flags=""; \
     for extra in $(echo "${RAVEN_EXTRAS}" | tr ',' ' '); do flags="${flags} --extra ${extra}"; done; \
@@ -84,7 +84,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # raven/agent/subagent/vendored_agents.py), so the image needs no wheel-time
 # git tree and behaves like the environment the tests run in.
 COPY . /app
-RUN --mount=type=cache,target=/root/.cache/uv \
+RUN --mount=type=cache,id=s/d3dcc0aa-b425-42e9-87cb-c303bf086764-/root/.cache/uv,target=/root/.cache/uv \
     set -eu; \
     flags=""; \
     for extra in $(echo "${RAVEN_EXTRAS}" | tr ',' ' '); do flags="${flags} --extra ${extra}"; done; \
@@ -106,7 +106,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # operator's own fetch inside a container, but an image that is then pushed to
 # a registry is redistribution. NOTICES.md, "deepdoc models", has the detail.
 ARG RAVEN_RESOURCES="1"
-RUN --mount=type=cache,target=/root/.cache/uv \
+RUN --mount=type=cache,id=s/d3dcc0aa-b425-42e9-87cb-c303bf086764-/root/.cache/uv,target=/root/.cache/uv \
     set -eu; \
     if [ "${RAVEN_RESOURCES}" = "1" ]; then \
         uv run --frozen --no-dev python scripts/fetch_resources.py; \
@@ -121,7 +121,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # ppt-engine and design-engine are opt-in -- between them they add
 # matplotlib, pymupdf and cairo.
 ARG RAVEN_PLUGINS="everos-memory,everos-cloud-memory"
-RUN --mount=type=cache,target=/root/.cache/uv \
+RUN --mount=type=cache,id=s/d3dcc0aa-b425-42e9-87cb-c303bf086764-/root/.cache/uv,target=/root/.cache/uv \
     set -eu; \
     if [ -n "${RAVEN_PLUGINS}" ]; then \
         paths=""; \
@@ -226,7 +226,7 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 # non-root user cannot take, and the agent's own tools install into /data. The
 # container is the isolation boundary here -- do not also publish the engine's
 # port straight to a network you do not trust.
-VOLUME ["/data"]
+# /data is persisted by a Railway Volume mounted at /data.
 EXPOSE 80
 
 # tini reaps what the agent spawns: the engine launches ACP agents and the
